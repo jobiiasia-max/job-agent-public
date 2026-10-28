@@ -1,0 +1,7 @@
+langchain-groq
+langchain-core
+pypdf
+requests
+feedparser
+python-dotenv
+schedule
