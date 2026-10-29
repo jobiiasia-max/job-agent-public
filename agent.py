@@ -11,7 +11,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from cv_reader import extract_skills, read_cv_text
-from emailer import send_email
+from emailer import send_email, send_status_email
 from job_sources import fetch_remotive, fetch_weworkremotely
 from matcher import get_llm, score_job
 
@@ -47,6 +47,7 @@ def run_once(keywords: list[str], cv_text: str) -> None:
     if not new_jobs:
         print("No new jobs this time.")
         return
+    
 
     # 2. score a limited number; the rest wait for the next run
     batch = new_jobs[:MAX_JOBS_PER_RUN]
@@ -64,6 +65,7 @@ def run_once(keywords: list[str], cv_text: str) -> None:
             good_jobs.append(job)
 
     # 3. email only the good matches
+        # 3. email the good matches, or a short status email if there are none
     if good_jobs:
         good_jobs.sort(key=lambda j: j["score"], reverse=True)
         try:
@@ -74,7 +76,13 @@ def run_once(keywords: list[str], cv_text: str) -> None:
             return  # do not mark as seen, so we retry next run
     else:
         print(f"No job scored {MIN_SCORE}+ this time.")
-
+        try:
+            send_status_email(
+                f"No job scored {MIN_SCORE}+ this time. "
+                f"The agent checked {len(scored_urls)} new job(s)."
+            )
+        except Exception as e:
+            print(f"Status email failed: {e}")
     seen.update(scored_urls)
     save_seen(seen)
 
