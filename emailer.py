@@ -1,13 +1,29 @@
-"""Send an email with the best new jobs through the Resend web API (HTTPS)."""
+"""Send emails through the Resend web API (HTTPS)."""
 import os
 
 import requests
 
 
-def send_email(good_jobs: list[dict]) -> None:
+def _post_email(subject: str, text: str) -> None:
     api_key = os.environ["RESEND_API_KEY"].strip()
     receiver = os.environ["EMAIL_RECEIVER"].strip()
 
+    resp = requests.post(
+        "https://api.resend.com/emails",
+        headers={"Authorization": f"Bearer {api_key}"},
+        json={
+            "from": "Job Agent <onboarding@resend.dev>",
+            "to": [receiver],
+            "subject": subject,
+            "text": text,
+        },
+        timeout=30,
+    )
+    if resp.status_code >= 400:
+        raise RuntimeError(f"Resend error {resp.status_code}: {resp.text}")
+
+
+def send_email(good_jobs: list[dict]) -> None:
     lines = [f"{len(good_jobs)} new job(s) match your CV (best first):\n"]
     for j in good_jobs:
         lines.append(
@@ -16,17 +32,11 @@ def send_email(good_jobs: list[dict]) -> None:
             f"  Source: {j['source']} | Matched skill: {j['keyword']}\n"
             f"  Apply: {j['url']}\n"
         )
-
-    resp = requests.post(
-        "https://api.resend.com/emails",
-        headers={"Authorization": f"Bearer {api_key}"},
-        json={
-            "from": "Job Agent <onboarding@resend.dev>",
-            "to": [receiver],
-            "subject": f"Job Agent: {len(good_jobs)} good match(es) for you",
-            "text": "\n".join(lines),
-        },
-        timeout=30,
+    _post_email(
+        subject=f"Job Agent: {len(good_jobs)} good match(es) for you",
+        text="\n".join(lines),
     )
-    if resp.status_code >= 400:
-        raise RuntimeError(f"Resend error {resp.status_code}: {resp.text}")
+
+
+def send_status_email(message: str) -> None:
+    _post_email(subject="Job Agent: no good matches this time", text=message)
