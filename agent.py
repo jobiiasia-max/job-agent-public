@@ -46,6 +46,12 @@ def run_once(keywords: list[str], cv_text: str) -> None:
 
     if not new_jobs:
         print("No new jobs this time.")
+        try:
+            send_status_email(
+                f"No new jobs this time."
+            )
+        except Exception as e:
+            print(f"Status email failed: {e}")
         return
     
 
