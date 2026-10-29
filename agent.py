@@ -77,10 +77,12 @@ def run_once(keywords: list[str], cv_text: str) -> None:
     else:
         print(f"No job scored {MIN_SCORE}+ this time.")
         try:
+            print("inside try")
             send_status_email(
                 f"No job scored {MIN_SCORE}+ this time. "
                 f"The agent checked {len(scored_urls)} new job(s)."
             )
+            print("try done")
         except Exception as e:
             print(f"Status email failed: {e}")
     seen.update(scored_urls)
