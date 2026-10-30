@@ -2,8 +2,8 @@ name: Job Agent
 
 on:
   schedule:
-    - cron: "0 */3 * * *"
-  workflow_dispatch:
+  - cron: "0 7,14,23 * * *"
+  workflow_dispatch:        
 
 permissions:
   contents: write
